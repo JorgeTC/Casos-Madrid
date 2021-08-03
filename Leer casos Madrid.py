@@ -5,7 +5,7 @@ import pdfplumber
 from openpyxl import load_workbook
 
 class PDF_Reader():
-    def __init__(self, date):
+    def __init__(self, date=datetime.date.today()):
         self.date = date
 
         self.download_pdf()
