@@ -6,10 +6,13 @@ from openpyxl import load_workbook
 
 class PDF_Reader():
     def __init__(self, date=datetime.date.today()):
+        # Fecha que me interesa leer
         self.date = date
 
+        # Descargo el último pdf disponible
         self.download_pdf()
 
+        # Abro el archivo pdf en modo lectura
         self.pdf_file = open('tmp.pdf', 'rb')
         self.fileText = ""
         self.data = []
@@ -22,10 +25,14 @@ class PDF_Reader():
         os.remove("tmp.pdf")
 
     def get_map_url(self):
+        # Sabiendo la fecha, compongo la dirección de su pdf
         prefix = "https://www.comunidad.madrid/sites/default/files/doc/sanidad/"
         sufix = "_cam_covid19.pdf"
+        # Aplico los formatos de cadena a año, mes y día
         date_str = str(self.date.year)[-2:] + "{:02d}".format(self.date.month) + "{:02d}".format(self.date.day)
+
         url = prefix + date_str + sufix
+
         return url
 
     def download_pdf(self):
@@ -95,15 +102,17 @@ class PDF_Reader():
         self.data = self.data + data
 
     def __check_header(self, list_page):
+        # Los encabezados de la tabla siempre estarán al principio de mi lista.
+        # Leo su primer elemento hasta que se afectivamente una fecha.
         while list_page:
             try:
-                # Compruebo que el primer dato sea una fecha
+                # Compruebo que el primer dato sea una fecha…
                 datetime.datetime.strptime(list_page[0], "%d/%m/%Y")
             except:
-                # en caso contrario elimino este elemento
+                # …en caso contrario elimino este elemento
                 list_page.pop(0)
             else:
-                # Si en efecto es una fecha, no hay nada más que modificar en el encabezado
+                # Si en efecto es una fecha, no hay nada más que modificar en el encabezado.
                 break
 
         return list_page
@@ -113,39 +122,52 @@ class Excel_writer():
         self.excel_name = "Casos Comunidad de Madrid.xlsx"
         self.workbook = load_workbook(self.excel_name)
 
+        # Guardo la hoja donde voy a escribir los datos.
         self.sheet = self.workbook[self.workbook.sheetnames[0]]
+        # Las celdas se numeran a partir de 1.
+        # No puedo escribir en la primera fila, es para los encabezados.
         self.index_line = 2
 
     def __del__(self):
-        # Guardo el xlsx
+        # Guardo el xlsx.
+        # Le doy el mismo nombre que tenía.
         self.workbook.save(self.excel_name)
         # Cierro el xlsx
         self.workbook.close()
 
     def write_data(self, data):
+        # Data debe ser una lista de pares.
+        # El primer elemento debe ser una fecha en formato fecha.
+        # El segundo elemento, la cantidad de positivos en formato entero.
         for value in data:
-            # Fecha escrita con formato de fecha
+            # Fecha escrita con formato de fecha.
             self.__write_date(value)
-            # Positivos escritos con formato de entero
+            # Positivos escritos con formato de entero.
             self.__write_cases(value)
+
+            # Avanzo a la siguiente linea.
             self.index_line = self.index_line + 1
 
     def __write_date(self, value):
+        # Dado el par value, escribo la fecha (1º elemento) en la casilla adecuada de excel.
+
         cell = self.sheet.cell(row=self.index_line, column=1)
-        # Fecha escrita con formato de fecha
+        # Fecha escrita con formato de fecha.
         cell.value = value[0]
         cell.number_format = 'mm-dd-yy'
 
     def __write_cases(self, value):
+        # Dado el par value, escribo los positivos (2º elemento) en la casilla adecuada de excel.
+
         cell = self.sheet.cell(row=self.index_line, column=2)
-        # Positivos escritos con formato de entero
+        # Positivos escritos con formato de entero.
         cell.value = value[1]
         cell.number_format = '#,##0'
 
 
 if __name__ == "__main__":
 
-    last_data = PDF_Reader(datetime.date.today())
+    last_data = PDF_Reader()
     list_data = last_data.read_file()
     del last_data
 
