@@ -173,4 +173,4 @@ if __name__ == "__main__":
 
     excel = Excel_writer()
     excel.write_data(list_data)
-
+    del excel
