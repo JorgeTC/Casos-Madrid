@@ -88,8 +88,10 @@ if __name__ == "__main__":
         for value in data:
             # Fecha escrita con formato de fecha
             worksheet.cell(row=indexLine, column=1).value = value[0]
+            worksheet.cell(row=indexLine, column=1).number_format = 'mm-dd-yy'
             # Positivos escritos con formato de entero
             worksheet.cell(row=indexLine, column=2).value = value[1]
+            worksheet.cell(row=indexLine, column=2).number_format = '#,##0'
             indexLine = indexLine + 1
 
     file.close()  # Cierro el archivo PDF
