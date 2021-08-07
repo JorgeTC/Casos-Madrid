@@ -8,12 +8,14 @@ class PDF_Reader():
     def __init__(self, date=datetime.date.today()):
         # Fecha que me interesa leer
         self.date = date
+        # Nombre con el que guardo el PDF temporal
+        self.pdf_name = 'tmp.pdf'
 
         # Descargo el último pdf disponible
         self.download_pdf()
 
         # Abro el archivo pdf en modo lectura
-        self.pdf_file = open('tmp.pdf', 'rb')
+        self.pdf_file = open(self.pdf_name, 'rb')
         self.fileText = ""
         self.data = []
         return
@@ -22,7 +24,7 @@ class PDF_Reader():
         # Cierro el archivo PDF
         self.pdf_file.close()
         # Elimino el PDF
-        os.remove("tmp.pdf")
+        os.remove(self.pdf_name)
 
     def get_map_url(self):
         # Sabiendo la fecha, compongo la dirección de su pdf
@@ -43,7 +45,7 @@ class PDF_Reader():
             self.date = self.date - datetime.timedelta(days=1)
             response = requests.get(self.get_map_url())
 
-        with open("tmp.pdf", 'wb') as f:
+        with open(self.pdf_name, 'wb') as f:
             print("Último informe del día " + str(self.date.day) + "-" + str(self.date.month) + "-" + str(self.date.year))
             # Descargo el PDF
             f.write(response.content)
