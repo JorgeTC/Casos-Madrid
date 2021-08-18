@@ -52,12 +52,15 @@ class PDF_Reader():
 
     def read_file(self):
 
+        print("Abriendo PDF…")
+
         # creating a pdf reader object
         fileReader = pdfplumber.open(self.pdf_file)
 
         # Bool que me indica si he encontrado alguna tabla
         table_found = False
 
+        print("Leyendo PDF…")
         for page in fileReader.pages:
             # Extraigo el texto de la página actual
             self.fileText = page.extract_text().replace('\n','')
@@ -74,6 +77,7 @@ class PDF_Reader():
                 break
 
         # Ordeno los datos por fecha
+        print("Ordenando datos…")
         self.data.sort(key=lambda tup: tup[0])
 
         return self.data
@@ -122,6 +126,7 @@ class PDF_Reader():
 class Excel_writer():
     def __init__(self):
         self.excel_name = "Casos Comunidad de Madrid.xlsx"
+        print("Abriendo Excel…")
         self.workbook = load_workbook(self.excel_name)
 
         # Guardo la hoja donde voy a escribir los datos.
@@ -131,6 +136,7 @@ class Excel_writer():
         self.index_line = 2
 
     def __del__(self):
+        print("Guardando Excel…")
         # Guardo el xlsx.
         # Le doy el mismo nombre que tenía.
         self.workbook.save(self.excel_name)
@@ -141,6 +147,7 @@ class Excel_writer():
         # Data debe ser una lista de pares.
         # El primer elemento debe ser una fecha en formato fecha.
         # El segundo elemento, la cantidad de positivos en formato entero.
+        print("Escribiendo Excel…")
         for value in data:
             # Fecha escrita con formato de fecha.
             self.__write_date(value)
