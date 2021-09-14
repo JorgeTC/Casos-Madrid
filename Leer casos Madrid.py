@@ -41,15 +41,21 @@ class PDF_Reader():
 
         return url
 
+    def __get_date_response(self):
+        # Pruebo las distintas modulaciones de la dirección
+        response = requests.get(self.get_map_url(1))
+        if response.status_code == 200:
+            return response
+
+        response = requests.get(self.get_map_url(2))
+        if response.status_code == 200:
+            return response
+
     def download_pdf(self):
         # Estoy intentando acceder al informe de hoy
         while True:
-            # Pruebo las distintas modulaciones de la dirección
-            response = requests.get(self.get_map_url(1))
-            if response.status_code == 200:
-                break
-
-            response = requests.get(self.get_map_url(2))
+            # Busco la dirección.
+            response = self.__get_date_response()
             if response.status_code == 200:
                 break
 
