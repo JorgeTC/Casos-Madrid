@@ -36,6 +36,9 @@ class PDF_Reader():
         elif attempt == 2:
             prefix = "https://www.comunidad.madrid/sites/default/files/doc/sanidad/prev/"
             sufix = "_cam_covid19.pdf"
+        elif attempt == 3:
+            prefix = "https://www.comunidad.madrid/sites/default/files/aud/sanidad/prev/"
+            sufix = "_cam_covid19.pdf"
 
         url = prefix + date_str + sufix
 
@@ -48,6 +51,10 @@ class PDF_Reader():
             return response
 
         response = requests.get(self.get_map_url(2))
+        if response.status_code == 200:
+            return response
+
+        response = requests.get(self.get_map_url(3))
         if response.status_code == 200:
             return response
 
