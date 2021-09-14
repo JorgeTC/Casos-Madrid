@@ -26,24 +26,42 @@ class PDF_Reader():
         # Elimino el PDF
         os.remove(self.pdf_name)
 
-    def get_map_url(self):
-        # Sabiendo la fecha, compongo la dirección de su pdf
-        prefix = "https://www.comunidad.madrid/sites/default/files/doc/sanidad/"
-        sufix = "_cam_covid19.pdf"
+    def get_map_url(self, attempt=1):
         # Aplico los formatos de cadena a año, mes y día
         date_str = str(self.date.year)[-2:] + "{:02d}".format(self.date.month) + "{:02d}".format(self.date.day)
+        # Sabiendo la fecha, compongo la dirección de su pdf
+        if attempt == 1:
+            prefix = "https://www.comunidad.madrid/sites/default/files/doc/sanidad/"
+            sufix = "_cam_covid19.pdf"
+        elif attempt == 2:
+            prefix = "https://www.comunidad.madrid/sites/default/files/doc/sanidad/prev/"
+            sufix = "_cam_covid19.pdf"
 
         url = prefix + date_str + sufix
 
         return url
 
+    def __get_date_response(self):
+        # Pruebo las distintas modulaciones de la dirección
+        response = requests.get(self.get_map_url(1))
+        if response.status_code == 200:
+            return response
+
+        response = requests.get(self.get_map_url(2))
+        if response.status_code == 200:
+            return response
+
     def download_pdf(self):
-        response = requests.get(self.get_map_url())
-        # Estoy intentando acceder al PDF de hoy y quizás aún no se ha publicado.
-        while not response.status_code == 200:
-            # Me muevo al día anterior
+        # Estoy intentando acceder al informe de hoy
+        while True:
+            # Busco la dirección.
+            response = self.__get_date_response()
+            if response.status_code == 200:
+                break
+
+            # Ninguna de las modulaciones es válida.
+            # Asumo que aún no se ha publicado el informa diario.
             self.date = self.date - datetime.timedelta(days=1)
-            response = requests.get(self.get_map_url())
 
         with open(self.pdf_name, 'wb') as f:
             print("Último informe del día " + str(self.date.day) + "-" + str(self.date.month) + "-" + str(self.date.year))
