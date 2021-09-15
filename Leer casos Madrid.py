@@ -26,42 +26,49 @@ class PDF_Reader():
         # Elimino el PDF
         os.remove(self.pdf_name)
 
-    def get_map_url(self, attempt=1):
+    def __list_of_prefix(self):
+        self.prefix_list = []
+
+        self.prefix_list.append(["https://www.comunidad.madrid/sites/default/files/doc/sanidad/", \
+                                    "_cam_covid19.pdf"])
+        self.prefix_list.append(["https://www.comunidad.madrid/sites/default/files/doc/sanidad/prev/", \
+                                    "_cam_covid19.pdf"])
+        self.prefix_list.append(["https://www.comunidad.madrid/sites/default/files/aud/sanidad/prev/", \
+                                    "_cam_covid19.pdf"])
+        self.prefix_list.append(["https://www.comunidad.madrid/sites/default/files/doc/sanidad/", \
+                                    "_cam_covid19.pdf.pdf"])
+        return
+
+    def get_map_url(self, pref_list):
         # Aplico los formatos de cadena a año, mes y día
         date_str = str(self.date.year)[-2:] + "{:02d}".format(self.date.month) + "{:02d}".format(self.date.day)
         # Sabiendo la fecha, compongo la dirección de su pdf
-        if attempt == 1:
-            prefix = "https://www.comunidad.madrid/sites/default/files/doc/sanidad/"
-            sufix = "_cam_covid19.pdf"
-        elif attempt == 2:
-            prefix = "https://www.comunidad.madrid/sites/default/files/doc/sanidad/prev/"
-            sufix = "_cam_covid19.pdf"
-        elif attempt == 3:
-            prefix = "https://www.comunidad.madrid/sites/default/files/aud/sanidad/prev/"
-            sufix = "_cam_covid19.pdf"
+
+        prefix = pref_list[0]
+        sufix = pref_list[1]
 
         url = prefix + date_str + sufix
 
         return url
 
     def __get_date_response(self):
-        # Pruebo las distintas modulaciones de la dirección
-        response = requests.get(self.get_map_url(1))
-        if response.status_code == 200:
-            return response
+        # Loop para buscar el prefijo adecuado
+        for i in self.prefix_list:
+            response = requests.get(self.get_map_url(i))
 
-        response = requests.get(self.get_map_url(2))
-        if response.status_code == 200:
-            return response
+            if response.status_code == 200:
+                return response
 
-        response = requests.get(self.get_map_url(3))
-        if response.status_code == 200:
-            return response
+        return response
+
 
     def download_pdf(self):
+        # Defino la lista de prefijos
+        self.__list_of_prefix()
+
         # Estoy intentando acceder al informe de hoy
         while True:
-            # Busco la dirección.
+            # Pido el informe de hoy
             response = self.__get_date_response()
             if response.status_code == 200:
                 break
