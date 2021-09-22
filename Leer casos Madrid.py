@@ -37,6 +37,8 @@ class PDF_Reader():
                                     "_cam_covid19.pdf"])
         self.prefix_list.append(["https://www.comunidad.madrid/sites/default/files/doc/sanidad/", \
                                     "_cam_covid19.pdf.pdf"])
+        self.prefix_list.append(["https://www.comunidad.madrid/sites/default/files/doc/sanidad/", \
+                                    "_cam_covid.pdf"])
         return
 
     def get_map_url(self, pref_list):
