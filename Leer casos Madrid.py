@@ -27,18 +27,24 @@ class PDF_Reader():
         os.remove(self.pdf_name)
 
     def __list_of_prefix(self):
-        self.prefix_list = []
+        # Lista de todas las variantes de prefijo hasta ahora
+        prefix_list = ["https://www.comunidad.madrid/sites/default/files/doc/sanidad/", \
+                       "https://www.comunidad.madrid/sites/default/files/doc/sanidad/prev/", \
+                       "https://www.comunidad.madrid/sites/default/files/aud/sanidad/prev/",\
+                       "https://www.comunidad.madrid/sites/default/files/aud/sanidad/" ]
+        # Lista de todas las variantes de sufijo hasta ahora
+        sufix_list = ["_cam_covid19", \
+                    "_cam_covid"]
+        # Lista de todas las extensiones hasta ahora
+        extension_list = [".pdf", ".pdf.pdf"]
 
-        self.prefix_list.append(["https://www.comunidad.madrid/sites/default/files/doc/sanidad/", \
-                                    "_cam_covid19.pdf"])
-        self.prefix_list.append(["https://www.comunidad.madrid/sites/default/files/doc/sanidad/prev/", \
-                                    "_cam_covid19.pdf"])
-        self.prefix_list.append(["https://www.comunidad.madrid/sites/default/files/aud/sanidad/prev/", \
-                                    "_cam_covid19.pdf"])
-        self.prefix_list.append(["https://www.comunidad.madrid/sites/default/files/doc/sanidad/", \
-                                    "_cam_covid19.pdf.pdf"])
-        self.prefix_list.append(["https://www.comunidad.madrid/sites/default/files/doc/sanidad/", \
-                                    "_cam_covid.pdf"])
+        # Creo una lista donde guardo todas sus posibles combinaciones
+        self.pre_sufix_list = []
+        # Iteraciones ordenadas de más cambiante a más estable
+        for extension in extension_list:
+            for sufix in sufix_list:
+                for prefix in prefix_list:
+                    self.pre_sufix_list.append([prefix, sufix + extension])
         return
 
     def get_map_url(self, pref_list):
@@ -55,7 +61,7 @@ class PDF_Reader():
 
     def __get_date_response(self):
         # Loop para buscar el prefijo adecuado
-        for i in self.prefix_list:
+        for i in self.pre_sufix_list:
             response = requests.get(self.get_map_url(i))
 
             if response.status_code == 200:
