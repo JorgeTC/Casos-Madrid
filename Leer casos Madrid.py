@@ -3,6 +3,7 @@ import requests
 import os
 import pdfplumber
 from openpyxl import load_workbook
+import concurrent.futures
 
 class PDF_Reader():
     def __init__(self, date=datetime.date.today()):
@@ -60,14 +61,23 @@ class PDF_Reader():
         return url
 
     def __get_date_response(self):
-        # Loop para buscar el prefijo adecuado
-        for i in self.pre_sufix_list:
-            response = requests.get(self.get_map_url(i))
 
-            if response.status_code == 200:
-                return response
+        # Obtengo todas las variantes que puedo para el link de hoy
+        links = [self.get_map_url(i) for i in self.pre_sufix_list]
 
-        return response
+        # De forma paralelizada descargo el contenido de todos los links
+        executor = concurrent.futures.ThreadPoolExecutor()
+        responses = list(executor.map(requests.get, links))
+
+        # Miro cuántos de ellos me han devuelto realmente una página.
+        # Me espero que sólo uno de ellos tengo response_code 200
+        valid_resposes = [respose for respose in responses if respose.status_code == 200]
+        if len(valid_resposes):
+            # Devuelvo una página válida
+            return valid_resposes[0]
+        else:
+            # Devuelvo una página no válida
+            return responses[0]
 
 
     def download_pdf(self):
