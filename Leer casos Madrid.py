@@ -32,7 +32,8 @@ class PDF_Reader():
         prefix_list = ["https://www.comunidad.madrid/sites/default/files/doc/sanidad/", \
                        "https://www.comunidad.madrid/sites/default/files/doc/sanidad/prev/", \
                        "https://www.comunidad.madrid/sites/default/files/aud/sanidad/prev/",\
-                       "https://www.comunidad.madrid/sites/default/files/aud/sanidad/" ]
+                       "https://www.comunidad.madrid/sites/default/files/aud/sanidad/", \
+                       "https://www.comunidad.madrid/sites/default/files/doc/presidencia/" ]
         # Lista de todas las variantes de sufijo hasta ahora
         sufix_list = ["_cam_covid19", \
                     "_cam_covid"]
