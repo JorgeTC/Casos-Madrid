@@ -5,27 +5,33 @@ import pdfplumber
 from openpyxl import load_workbook
 import concurrent.futures
 
-class PDF_Reader():
-    def __init__(self, date=datetime.date.today()):
+class Downloader():
+    def __init__(self,date=datetime.date.today()):
         # Fecha que me interesa leer
         self.date = date
+
         # Nombre con el que guardo el PDF temporal
         self.pdf_name = 'tmp.pdf'
 
-        # Descargo el último pdf disponible
-        self.download_pdf()
+    def download_pdf(self):
+        # Defino la lista de prefijos
+        self.__list_of_prefix()
 
-        # Abro el archivo pdf en modo lectura
-        self.pdf_file = open(self.pdf_name, 'rb')
-        self.fileText = ""
-        self.data = []
-        return
+        # Estoy intentando acceder al informe de hoy
+        while True:
+            # Pido el informe de hoy
+            response = self.__get_date_response()
+            if response.status_code == 200:
+                break
 
-    def __del__(self):
-        # Cierro el archivo PDF
-        self.pdf_file.close()
-        # Elimino el PDF
-        os.remove(self.pdf_name)
+            # Ninguna de las modulaciones es válida.
+            # Asumo que aún no se ha publicado el informa diario.
+            self.date = self.date - datetime.timedelta(days=1)
+
+        with open(self.pdf_name, 'wb') as f:
+            print("Último informe del día " + str(self.date.day) + "-" + str(self.date.month) + "-" + str(self.date.year))
+            # Descargo el PDF
+            f.write(response.content)
 
     def __list_of_prefix(self):
         # Lista de todas las variantes de prefijo hasta ahora
@@ -49,7 +55,7 @@ class PDF_Reader():
                     self.pre_sufix_list.append([prefix, sufix + extension])
         return
 
-    def get_map_url(self, pref_list):
+    def __get_map_url(self, pref_list):
         # Aplico los formatos de cadena a año, mes y día
         date_str = str(self.date.year)[-2:] + "{:02d}".format(self.date.month) + "{:02d}".format(self.date.day)
         # Sabiendo la fecha, compongo la dirección de su pdf
@@ -64,7 +70,7 @@ class PDF_Reader():
     def __get_date_response(self):
 
         # Obtengo todas las variantes que puedo para el link de hoy
-        links = [self.get_map_url(i) for i in self.pre_sufix_list]
+        links = [self.__get_map_url(i) for i in self.pre_sufix_list]
 
         # De forma paralelizada descargo el contenido de todos los links
         executor = concurrent.futures.ThreadPoolExecutor()
@@ -81,25 +87,24 @@ class PDF_Reader():
             return responses[0]
 
 
-    def download_pdf(self):
-        # Defino la lista de prefijos
-        self.__list_of_prefix()
+class PDF_Reader():
+    def __init__(self):
+        # Descargo el último pdf disponible
+        download = Downloader()
+        download.download_pdf()
+        self.pdf_name = download.pdf_name
 
-        # Estoy intentando acceder al informe de hoy
-        while True:
-            # Pido el informe de hoy
-            response = self.__get_date_response()
-            if response.status_code == 200:
-                break
+        # Abro el archivo pdf en modo lectura
+        self.pdf_file = open(self.pdf_name, 'rb')
+        self.fileText = ""
+        self.data = []
+        return
 
-            # Ninguna de las modulaciones es válida.
-            # Asumo que aún no se ha publicado el informa diario.
-            self.date = self.date - datetime.timedelta(days=1)
-
-        with open(self.pdf_name, 'wb') as f:
-            print("Último informe del día " + str(self.date.day) + "-" + str(self.date.month) + "-" + str(self.date.year))
-            # Descargo el PDF
-            f.write(response.content)
+    def __del__(self):
+        # Cierro el archivo PDF
+        self.pdf_file.close()
+        # Elimino el PDF
+        os.remove(self.pdf_name)
 
     def read_file(self):
 
