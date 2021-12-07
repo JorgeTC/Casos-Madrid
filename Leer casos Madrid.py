@@ -1,12 +1,26 @@
-import datetime
-import requests
-import os
-import pdfplumber
-from openpyxl import load_workbook
 import concurrent.futures
+import datetime
+import os
+
+import pdfplumber
+import requests
+from openpyxl import load_workbook
+
+
+class URLFormat():
+
+    def __init__(self, prefix, sufix, extension, date_format):
+        self.prefix = prefix
+        self.sufix = sufix
+        self.extension = extension
+        self.date_format = date_format
+
+    def get_url(self, date):
+        return self.prefix + self.date_format(date) + self.sufix + self.extension
+
 
 class Downloader():
-    def __init__(self,date=datetime.date.today()):
+    def __init__(self, date=datetime.date.today()):
         # Fecha que me interesa leer
         self.date = date
 
@@ -29,22 +43,26 @@ class Downloader():
             self.date = self.date - datetime.timedelta(days=1)
 
         with open(self.pdf_name, 'wb') as f:
-            print("Último informe del día " + str(self.date.day) + "-" + str(self.date.month) + "-" + str(self.date.year))
+            print("Último informe del día " + str(self.date.day) +
+                  "-" + str(self.date.month) + "-" + str(self.date.year))
             # Descargo el PDF
             f.write(response.content)
 
     def __list_of_prefix(self):
         # Lista de todas las variantes de prefijo hasta ahora
-        prefix_list = ["https://www.comunidad.madrid/sites/default/files/doc/sanidad/", \
-                       "https://www.comunidad.madrid/sites/default/files/doc/sanidad/prev/", \
-                       "https://www.comunidad.madrid/sites/default/files/aud/sanidad/prev/",\
-                       "https://www.comunidad.madrid/sites/default/files/aud/sanidad/", \
-                       "https://www.comunidad.madrid/sites/default/files/doc/presidencia/" ]
+        prefix_list = ["https://www.comunidad.madrid/sites/default/files/doc/sanidad/",
+                       "https://www.comunidad.madrid/sites/default/files/doc/sanidad/prev/",
+                       "https://www.comunidad.madrid/sites/default/files/aud/sanidad/prev/",
+                       "https://www.comunidad.madrid/sites/default/files/aud/sanidad/",
+                       "https://www.comunidad.madrid/sites/default/files/doc/presidencia/"]
         # Lista de todas las variantes de sufijo hasta ahora
-        sufix_list = ["_cam_covid19", \
-                    "_cam_covid"]
+        sufix_list = ["_cam_covid19",
+                      "_cam_covid"]
         # Lista de todas las extensiones hasta ahora
         extension_list = [".pdf", ".pdf.pdf"]
+        # Lista de cómo se ha formateado la fecha
+        date_format_list = [lambda x: str(x.year)[-2:] + "{:02d}".format(x.month) + "{:02d}".format(x.day),
+                            lambda x: str(x.year) + "{:02d}".format(x.month) + "{:02d}".format(x.day)]
 
         # Creo una lista donde guardo todas sus posibles combinaciones
         self.pre_sufix_list = []
@@ -52,29 +70,21 @@ class Downloader():
         for extension in extension_list:
             for sufix in sufix_list:
                 for prefix in prefix_list:
-                    self.pre_sufix_list.append([prefix, sufix + extension])
+                    for date in date_format_list:
+                        self.pre_sufix_list.append(URLFormat(prefix,
+                                                             sufix,
+                                                             extension,
+                                                             date))
         return
-
-    def __get_map_url(self, pref_list):
-        # Aplico los formatos de cadena a año, mes y día
-        date_str = str(self.date.year)[-2:] + "{:02d}".format(self.date.month) + "{:02d}".format(self.date.day)
-        # Sabiendo la fecha, compongo la dirección de su pdf
-
-        prefix = pref_list[0]
-        sufix = pref_list[1]
-
-        url = prefix + date_str + sufix
-
-        return url
 
     def __get_date_response(self):
 
         # Obtengo todas las variantes que puedo para el link de hoy
-        links = [self.__get_map_url(i) for i in self.pre_sufix_list]
+        links = [i.get_url(self.date) for i in self.pre_sufix_list]
 
         # De forma paralelizada descargo el contenido de todos los links
-        executor = concurrent.futures.ThreadPoolExecutor()
-        responses = list(executor.map(requests.get, links))
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            responses = list(executor.map(requests.get, links))
 
         # Miro cuántos de ellos me han devuelto realmente una página.
         # Me espero que sólo uno de ellos tengo response_code 200
@@ -119,7 +129,7 @@ class PDF_Reader():
         print("Leyendo PDF…")
         for page in fileReader.pages:
             # Extraigo el texto de la página actual
-            self.fileText = page.extract_text().replace('\n','')
+            self.fileText = page.extract_text().replace('\n', '')
 
             # Compruebo si la página actual tiene tablas.
             if self.__has_tables():
@@ -159,7 +169,8 @@ class PDF_Reader():
         # Obtengo los pares eliminando los agregados
         data = list(zip(data[::3], data[1::3]))
         # Convierto los datos a fecha y enteros
-        data = [[datetime.datetime.strptime(i[0], "%d/%m/%Y"), int(i[1])] for i in data]
+        data = [[datetime.datetime.strptime(
+            i[0], "%d/%m/%Y"), int(i[1])] for i in data]
         # Actualizo la variable miembro con lo leído en la página actual
         self.data = self.data + data
 
@@ -178,6 +189,7 @@ class PDF_Reader():
                 break
 
         return list_page
+
 
 class Excel_writer():
     def __init__(self):
