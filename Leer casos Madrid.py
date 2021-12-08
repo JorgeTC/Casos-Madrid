@@ -1,10 +1,10 @@
 import concurrent.futures
 import datetime
 import os
-from bs4 import BeautifulSoup
 
 import pdfplumber
 import requests
+from bs4 import BeautifulSoup
 from openpyxl import load_workbook
 
 
