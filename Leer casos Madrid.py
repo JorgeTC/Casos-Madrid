@@ -23,7 +23,8 @@ class URLFormat():
 class Downloader():
 
     SZ_CAM_URL = 'https://www.comunidad.madrid'
-    SZ_ACTUAL_SITUATION = SZ_CAM_URL + '/servicios/salud/coronavirus#datos-situacion-actual'
+    SZ_ACTUAL_SITUATION = SZ_CAM_URL + \
+        '/servicios/salud/coronavirus#datos-situacion-actual'
     SZ_CAM_FILES = SZ_CAM_URL + "/sites/default/files"
 
     def __init__(self, date=datetime.date.today()):
@@ -109,7 +110,7 @@ class Downloader():
             if response.status_code == 200:
                 # Aviso por pantalla de cuál es el último informe
                 print("Último informe del día " + str(self.date.day) +
-                  "-" + str(self.date.month) + "-" + str(self.date.year))
+                      "-" + str(self.date.month) + "-" + str(self.date.year))
                 # Devuelvo el contenido de la página a la que he conseguido acceder
                 return response
 
