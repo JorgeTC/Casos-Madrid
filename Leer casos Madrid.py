@@ -1,6 +1,7 @@
 import concurrent.futures
 import datetime
 import os
+from bs4 import BeautifulSoup
 
 import pdfplumber
 import requests
@@ -20,6 +21,11 @@ class URLFormat():
 
 
 class Downloader():
+
+    SZ_CAM_URL = 'https://www.comunidad.madrid'
+    SZ_ACTUAL_SITUATION = SZ_CAM_URL + '/servicios/salud/coronavirus#datos-situacion-actual'
+    SZ_CAM_FILES = SZ_CAM_URL + "/sites/default/files"
+
     def __init__(self, date=datetime.date.today()):
         # Fecha que me interesa leer
         self.date = date
@@ -28,6 +34,71 @@ class Downloader():
         self.pdf_name = 'tmp.pdf'
 
     def download_pdf(self):
+        # Intento obtener el link desde la página de la CAM
+        response = self.__get_pdf_response_fromCAM()
+
+        # Si no lo he conseguido, pruebo las combinaciones de links
+        if not response:
+            response = self.__try_combinations()
+
+        with open(self.pdf_name, 'wb') as f:
+            # Descargo el PDF
+            f.write(response.content)
+
+    def __get_pdf_response_fromCAM(self):
+        # Accedo a la página de la CAM donde está el enlace a la situación actual
+        response = requests.get(self.SZ_ACTUAL_SITUATION)
+        parsed = BeautifulSoup(response.text, 'html.parser')
+        # Busco los div de la misma clase que contiene el link
+        div_list = parsed.find_all('div', {'class': "field-item even"})
+
+        # Itero todos los elementos que ha encontrado.
+        # Sólo uno de ellos es válido
+        for div in div_list:
+            try:
+                # Compruebo que sea un h3
+                first_element = div.contents[0]
+                if first_element.name != 'h3':
+                    continue
+                # Compruebo que el texto esté en negrita
+                first_element = first_element.contents[0]
+                if first_element.name != 'strong':
+                    continue
+                # Compruebo que el texto sea el correcto
+                if first_element.string != 'Informe diario de situación':
+                    continue
+
+                # Es el elemento correcto, así que salgo del bucle
+                break
+            # Si no he conseguido acceder a alguno de los elementos,
+            # es que no es la sección que me interesa.
+            except:
+                pass
+
+        try:
+            # Accedo al hipervínculo
+            link_section = div.find('h2', {'class': "rtecenter"})
+            # Tomo el link, texto y dirección
+            link = link_section.find('a')
+            # Extraigo la dirección
+            sz_link = link.attrs['href']
+        except:
+            # Si no he podido acceder a alguno de los elementos,
+            # no puedo descargar la página por tanto
+            return None
+
+        # Descargo la página
+        response = requests.get(self.SZ_CAM_URL + sz_link)
+        # Comrpuebo que la desarga haya ido bien
+        if response.status_code == 200:
+            # En este punto ya sé seguro que voy a devolver una página correcta.
+            # Imprimo por pantalla el texto para decir qué fecha voy a extraer
+            print(link.contents[0])
+            return response
+        else:
+            return None
+
+    def __try_combinations(self):
         # Defino la lista de prefijos
         self.__list_of_prefix()
 
@@ -36,25 +107,23 @@ class Downloader():
             # Pido el informe de hoy
             response = self.__get_date_response()
             if response.status_code == 200:
-                break
+                # Aviso por pantalla de cuál es el último informe
+                print("Último informe del día " + str(self.date.day) +
+                  "-" + str(self.date.month) + "-" + str(self.date.year))
+                # Devuelvo el contenido de la página a la que he conseguido acceder
+                return response
 
             # Ninguna de las modulaciones es válida.
             # Asumo que aún no se ha publicado el informa diario.
             self.date = self.date - datetime.timedelta(days=1)
 
-        with open(self.pdf_name, 'wb') as f:
-            print("Último informe del día " + str(self.date.day) +
-                  "-" + str(self.date.month) + "-" + str(self.date.year))
-            # Descargo el PDF
-            f.write(response.content)
-
     def __list_of_prefix(self):
         # Lista de todas las variantes de prefijo hasta ahora
-        prefix_list = ["https://www.comunidad.madrid/sites/default/files/doc/sanidad/",
-                       "https://www.comunidad.madrid/sites/default/files/doc/sanidad/prev/",
-                       "https://www.comunidad.madrid/sites/default/files/aud/sanidad/prev/",
-                       "https://www.comunidad.madrid/sites/default/files/aud/sanidad/",
-                       "https://www.comunidad.madrid/sites/default/files/doc/presidencia/"]
+        prefix_list = [self.SZ_CAM_FILES + "/doc/sanidad/",
+                       self.SZ_CAM_FILES + "/doc/sanidad/prev/",
+                       self.SZ_CAM_FILES + "/aud/sanidad/prev/",
+                       self.SZ_CAM_FILES + "/aud/sanidad/",
+                       self.SZ_CAM_FILES + "/doc/presidencia/"]
         # Lista de todas las variantes de sufijo hasta ahora
         sufix_list = ["_cam_covid19",
                       "_cam_covid"]
