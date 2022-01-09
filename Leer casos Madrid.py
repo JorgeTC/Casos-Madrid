@@ -50,42 +50,15 @@ class Downloader():
         # Accedo a la página de la CAM donde está el enlace a la situación actual
         response = requests.get(self.SZ_ACTUAL_SITUATION)
         parsed = BeautifulSoup(response.text, 'html.parser')
-        # Busco los div de la misma clase que contiene el link
-        div_list = parsed.find_all('div', {'class': "field-item even"})
 
-        # Itero todos los elementos que ha encontrado.
-        # Sólo uno de ellos es válido
-        for div in div_list:
-            try:
-                # Compruebo que sea un h3
-                first_element = div.contents[0]
-                if first_element.name != 'h3':
-                    continue
-                # Compruebo que el texto esté en negrita
-                first_element = first_element.contents[0]
-                if first_element.name != 'strong':
-                    continue
-                # Compruebo que el texto sea el correcto
-                if first_element.string != 'Informe diario de situación':
-                    continue
-
-                # Es el elemento correcto, así que salgo del bucle
-                break
-            # Si no he conseguido acceder a alguno de los elementos,
-            # es que no es la sección que me interesa.
-            except:
-                pass
-
+        # Accedo al hipervínculo.
+        # Hay varios h2 en la página per el primero es el que contiene la información que necesito
+        hipervinculo = parsed.find('h2', {'class': "rtecenter"})
         try:
-            # Accedo al hipervínculo
-            link_section = div.find('h2', {'class': "rtecenter"})
-            # Tomo el link, texto y dirección
-            link = link_section.find('a')
-            # Extraigo la dirección
-            sz_link = link.attrs['href']
+            # Obtengo la dirección a la que condice el enlace
+            a_link = hipervinculo.find('a', href=True)
+            sz_link = a_link.attrs['href']
         except:
-            # Si no he podido acceder a alguno de los elementos,
-            # no puedo descargar la página por tanto
             return None
 
         # Descargo la página
@@ -94,7 +67,7 @@ class Downloader():
         if response.status_code == 200:
             # En este punto ya sé seguro que voy a devolver una página correcta.
             # Imprimo por pantalla el texto para decir qué fecha voy a extraer
-            print(link.contents[0])
+            print(hipervinculo.text)
             return response
         else:
             return None
