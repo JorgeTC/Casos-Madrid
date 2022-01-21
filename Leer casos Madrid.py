@@ -1,6 +1,7 @@
 import concurrent.futures
 import datetime
 import os
+import re
 
 import pdfplumber
 import requests
@@ -197,12 +198,10 @@ class PDF_Reader():
         return self.fileText.find("Se realiza una actualización diaria ") >= 0
 
     def __get_clear_data(self):
-        # Elimino la cabecera del texto
-        self.fileText = self.fileText.split("Diario  Acumulado")[-1]
-        # Elimino la cola del texto
-        # La "F" es el inicio del pie de página:
-        # "Fuente: Dirección General de Salud Pública"
-        self.fileText = self.fileText.split("F")[0]
+        # Me quedo solo con los datos
+        # Empiezan con una fecha y terminan con un número
+        reSearch = re.search("(\d{2}/\d{2}/\d{4}.+\d+)", self.fileText)
+        self.fileText = reSearch.group(1)
         # Guardo en una lista todos los datos, no están ordenados
         data = self.fileText.split(" ")
         # Elimino las cadenas vacías
