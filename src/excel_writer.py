@@ -1,4 +1,31 @@
 import openpyxl
+import enum
+
+
+class ExcelColumns(enum.Enum):
+    Fecha = enum.auto()
+    Positivos = enum.auto()
+    Media_7_dias = enum.auto()
+    Derivada_7 = enum.auto()
+    Media_14_dias = enum.auto()
+    Derivada_14 = enum.auto()
+    Promedio = enum.auto()
+    Linea_records = enum.auto()
+    Riesgo_bajo = enum.auto()
+    Riesgo_medio = enum.auto()
+    Riesgo_alto = enum.auto()
+    Riesgo_extremo = enum.auto()
+    Media_derivada = enum.auto()
+    Media_reproductivo = enum.auto()
+    Dia_semana = enum.auto()
+    Suma_parcial = enum.auto()
+    Reproductivo = enum.auto()
+
+    def __str__(self) -> str:
+        return "Tabla2[{}]".format(self.name)
+
+    def __int__(self) -> int:
+        return self.value
 
 
 class Excel_writer():
