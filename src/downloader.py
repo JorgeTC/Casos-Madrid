@@ -4,6 +4,12 @@ from bs4 import BeautifulSoup
 
 class Downloader():
 
+    SZ_CAM_URL = 'https://www.comunidad.madrid'
+    SZ_ACTUAL_SITUATION = SZ_CAM_URL + \
+        '/servicios/salud/coronavirus#datos-situacion-actual'
+    SZ_CAM_FILES = SZ_CAM_URL + "/sites/default/files"
+
+
     def __init__(self):
 
         # Nombre con el que guardo el PDF temporal
