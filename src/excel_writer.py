@@ -103,7 +103,7 @@ class Excel_writer():
 
         # Escribo el número reproductivo
         if self.index_line == 2:
-            formula = "=0"
+            formula = "=1"
         else:
             formula = f"={ExcelColumns.Media_14_dias}/OFFSET({ExcelColumns.Media_14_dias},-1,0)"
         self.__set_cell_value(ExcelColumns.Reproductivo,
@@ -122,7 +122,7 @@ class Excel_writer():
         self.__set_cell_value(ExcelColumns.Media_derivada,
                               formula)
         # Media del número reproductivo
-        formula = f"=POWER(PRODUCT(OFFSET({ExcelColumns.Reproductivo}, 0, 0, -MIN(ROW() - 1,7))),1/MIN(ROW() - 1,7))"
+        formula = f"=GEOMEAN(OFFSET({ExcelColumns.Reproductivo}, 0, 0, -MIN(ROW() - 1,7)))"
         self.__set_cell_value(ExcelColumns.Media_reproductivo,
                               formula)
 
